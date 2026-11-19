@@ -54,6 +54,8 @@ public final class BookStoreConstants {
 	/** The Constant EPSILON used for floating point number comparison */
 	public static final float EPSILON = 0.000001F;
 
+	public static final String INVALID_RATING = "Invalid Rating";
+
 	/**
 	 * Prevents the instantiation of a new {@link BookStoreConstants}.
 	 */
