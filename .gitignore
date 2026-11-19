@@ -2,3 +2,13 @@
 
 # direnv
 .direnv
+
+# java
+*.class
+*.war
+*.ear
+bin/
+
+# gradle
+.gradle
+build/
