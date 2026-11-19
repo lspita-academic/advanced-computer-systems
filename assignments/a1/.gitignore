@@ -1,0 +1,13 @@
+*.class
+
+# Package Files #
+*.war
+*.ear
+/bin/
+.DS_Store
+
+# Ignore Gradle project-specific cache directory
+.gradle
+
+# Ignore Gradle build output directory
+build
