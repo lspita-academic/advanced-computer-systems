@@ -2,6 +2,8 @@ package com.acertainbookstore.client.tests;
 
 import static org.junit.Assert.*;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -11,9 +13,11 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.runner.notification.StoppedByUserException;
 
 import com.acertainbookstore.business.Book;
 import com.acertainbookstore.business.BookCopy;
+import com.acertainbookstore.business.BookRating;
 import com.acertainbookstore.business.CertainBookStore;
 import com.acertainbookstore.business.ImmutableStockBook;
 import com.acertainbookstore.business.StockBook;
@@ -26,7 +30,7 @@ import com.acertainbookstore.utils.BookStoreException;
 
 /**
  * {@link BookStoreTest} tests the {@link BookStore} interface.
- * 
+ *
  * @see BookStore
  */
 public class BookStoreTest {
@@ -348,6 +352,41 @@ public class BookStoreTest {
 		assertTrue(booksInStorePreTest.containsAll(booksInStorePostTest)
 				&& booksInStorePreTest.size() == booksInStorePostTest.size());
 	}
+
+	@Test
+	public void testRateBook() throws BookStoreException {
+	    BookRating r1 = new BookRating(getDefaultBook().getISBN(), 2);
+		Set<BookRating> rs1 =  new HashSet<BookRating>();
+		rs1.add(r1);
+	    client.rateBooks(rs1);
+
+	    BookRating r2 = new BookRating(getDefaultBook().getISBN(), 5);
+		Set<BookRating> rs2 =  new HashSet<BookRating>();
+		rs2.add(r2);
+	    client.rateBooks(rs2);
+
+		StockBook book = storeManager.getBooks().getFirst();
+		assertTrue(book.getAverageRating() == 3.5);
+	}
+	@Test
+	public void testGetTopRatedBooks() throws BookStoreException {
+	    addBooks(1, 1);
+	    addBooks(2, 1);
+        BookRating r1 = new BookRating(getDefaultBook().getISBN(), 2);
+        BookRating r2 = new BookRating(1, 5);
+        BookRating r3 = new BookRating(2, 4);
+        Set<BookRating> ratings =  new HashSet<BookRating>();
+        ratings.add(r1);
+        ratings.add(r2);
+        ratings.add(r3);
+        client.rateBooks(ratings);
+
+        List<Book> books = client.getTopRatedBooks(2);
+        assertTrue(books.size() == 2);
+        assertTrue(books.get(0).getISBN() == 1);
+        assertTrue(books.get(1).getISBN() == 2);
+	}
+
 
 	/**
 	 * Tear down after class.
