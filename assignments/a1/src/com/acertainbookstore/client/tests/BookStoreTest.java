@@ -381,8 +381,9 @@ public class BookStoreTest {
         ratings.add(r3);
         client.rateBooks(ratings);
 
-        List<Book> books = client.getTopRatedBooks(2);
-        assertTrue(books.size() == 2);
+        Integer numBooks = 2;
+        List<Book> books = client.getTopRatedBooks(numBooks);
+        assertTrue(books.size() == numBooks);
         assertTrue(books.get(0).getISBN() == 1);
         assertTrue(books.get(1).getISBN() == 2);
 	}
