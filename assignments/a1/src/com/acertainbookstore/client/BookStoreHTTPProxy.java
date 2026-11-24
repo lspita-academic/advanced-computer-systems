@@ -167,8 +167,11 @@ public class BookStoreHTTPProxy implements BookStore {
     			+ BookStoreConstants.BOOK_NUM_PARAM + "=" + urlEncodedNumBooks;
 
     	BookStoreRequest bookStoreRequest = BookStoreRequest.newGetRequest(urlString);
-    	BookStoreResponse bookStoreResponse = BookStoreUtility.performHttpExchange(client, bookStoreRequest,
-    			serializer.get());
+    	BookStoreResponse bookStoreResponse = BookStoreUtility.performHttpExchange(
+            client,
+            bookStoreRequest,
+           	serializer.get()
+        );
     	return (List<Book>) bookStoreResponse.getList();
 	}
 }

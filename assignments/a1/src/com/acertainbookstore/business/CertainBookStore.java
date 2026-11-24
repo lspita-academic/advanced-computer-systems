@@ -323,6 +323,7 @@ public class CertainBookStore implements BookStore, StockManager {
 		return bookMap.values().stream()
 		    .sorted(Comparator.comparing(BookStoreBook::getAverageRating).reversed())
 			.limit(numBooks)
+			.map(BookStoreBook::immutableBook)
 			.collect(Collectors.toList());
 	}
 
@@ -343,7 +344,9 @@ public class CertainBookStore implements BookStore, StockManager {
 	 */
 	@Override
 	public synchronized void rateBooks(Set<BookRating> bookRating) throws BookStoreException {
-		for (BookRating rating : bookRating) {
+	    if (bookRating == null) throw new BookStoreException(BookStoreConstants.NULL_INPUT);
+
+	    for (BookRating rating : bookRating) {
 		    int isbn = rating.getISBN();
 		    BookStoreBook book = this.bookMap.get(isbn);
 			if (book == null) throw new BookStoreException(BookStoreConstants.NOT_AVAILABLE);

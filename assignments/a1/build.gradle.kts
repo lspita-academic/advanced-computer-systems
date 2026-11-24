@@ -28,7 +28,10 @@ sourceSets {
 }
 
 dependencies {
-    implementation(fileTree("lib") { include("**/*.jar") })
+    implementation(fileTree("lib") {
+        include("**/*.jar")
+        exclude("jetty-all-*-uber.jar")
+    })
 }
 
 val port = (findProperty("port") ?: "8081").toString()
