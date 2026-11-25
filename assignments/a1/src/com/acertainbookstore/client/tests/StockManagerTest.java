@@ -28,7 +28,7 @@ import com.acertainbookstore.utils.BookStoreException;
 
 /**
  * {@StockManagerTest} tests the {@link StockManager} interface.
- * 
+ *
  * @see StockManager
  */
 public class StockManagerTest {
@@ -56,7 +56,7 @@ public class StockManagerTest {
 		try {
 			String localTestProperty = System.getProperty(BookStoreConstants.PROPERTY_KEY_LOCAL_TEST);
 			localTest = (localTestProperty != null) ? Boolean.parseBoolean(localTestProperty) : localTest;
-			
+
 			if (localTest) {
 				CertainBookStore store = new CertainBookStore();
 				storeManager = store;
@@ -65,7 +65,7 @@ public class StockManagerTest {
 				storeManager = new StockManagerHTTPProxy("http://localhost:8081/stock");
 				client = new BookStoreHTTPProxy("http://localhost:8081");
 			}
-			
+
 			storeManager.removeAllBooks();
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -468,7 +468,21 @@ public class StockManagerTest {
 		booksInStoreList = storeManager.getBooks();
 		assertTrue(booksInStoreList.size() == 0);
 	}
-
+	@Test
+	public void testGetBooksInDemand() throws BookStoreException {
+	    BookCopy b = new BookCopy(TEST_ISBN, NUM_COPIES + 1);
+		Set<BookCopy> booksToBuy =  new HashSet<BookCopy>();
+        booksToBuy.add(b);
+	    try {
+	        client.buyBooks(booksToBuy);
+	        fail();
+	    } catch (BookStoreException ex) {
+	        // Expected: requesting more copies than in stock registers a sale miss.
+	    }
+		List<StockBook> demand = storeManager.getBooksInDemand();
+		assertTrue(demand.size() == 1);
+		assertTrue(demand.get(0).getISBN() == TEST_ISBN);
+	}
 	/**
 	 * Tear down after class.
 	 *
