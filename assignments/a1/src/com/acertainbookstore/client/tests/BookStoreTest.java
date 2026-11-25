@@ -388,7 +388,140 @@ public class BookStoreTest {
         assertTrue(books.get(1).getISBN() == 2);
 	}
 
+	/**
+	 * Tests that rateBooks enforces all-or-nothing semantics when one of the
+	 * ISBNs in the request does not exist: no rating in the request may be
+	 * applied, not even the ones for books that do exist.
+	 *
+	 * @throws BookStoreException
+	 *             the book store exception
+	 */
+	@Test
+	public void testRateBooksInvalidISBNAllOrNothing() throws BookStoreException {
+		addBooks(1, 1);
 
+		BookRating validRating = new BookRating(getDefaultBook().getISBN(), 4);
+		BookRating invalidRating = new BookRating(100000, 3); // ISBN not in store
+
+		Set<BookRating> ratings = new HashSet<BookRating>();
+		ratings.add(validRating);
+		ratings.add(invalidRating);
+
+		try {
+			client.rateBooks(ratings);
+			fail();
+		} catch (BookStoreException ex) {
+			;
+		}
+
+		for (StockBook book : storeManager.getBooks()) {
+			assertTrue(book.getNumTimesRated() == 0);
+			assertTrue(book.getTotalRating() == 0);
+		}
+	}
+
+	/**
+	 * Tests that rateBooks enforces all-or-nothing semantics when one of the
+	 * ratings in the request is out of the valid [0, 5] range: no rating in
+	 * the request may be applied, not even the valid ones.
+	 *
+	 * @throws BookStoreException
+	 *             the book store exception
+	 */
+	@Test
+	public void testRateBooksInvalidRatingAllOrNothing() throws BookStoreException {
+		addBooks(1, 1);
+
+		BookRating validRating = new BookRating(getDefaultBook().getISBN(), 4);
+		BookRating invalidRating = new BookRating(1, 6); // out of range
+
+		Set<BookRating> ratings = new HashSet<BookRating>();
+		ratings.add(validRating);
+		ratings.add(invalidRating);
+
+		try {
+			client.rateBooks(ratings);
+			fail();
+		} catch (BookStoreException ex) {
+			;
+		}
+
+		for (StockBook book : storeManager.getBooks()) {
+			assertTrue(book.getNumTimesRated() == 0);
+			assertTrue(book.getTotalRating() == 0);
+		}
+	}
+
+	/**
+	 * Tests that getTopRatedBooks enforces all-or-nothing semantics: an
+	 * invalid numBooks must throw without returning any (partial) result, and
+	 * must not corrupt the ratings used to answer subsequent, valid calls.
+	 *
+	 * @throws BookStoreException
+	 *             the book store exception
+	 */
+	@Test
+	public void testGetTopRatedBooksInvalidNumBooksAllOrNothing() throws BookStoreException {
+		addBooks(1, 1);
+
+		BookRating r1 = new BookRating(getDefaultBook().getISBN(), 3);
+		BookRating r2 = new BookRating(1, 5);
+		Set<BookRating> ratings = new HashSet<BookRating>();
+		ratings.add(r1);
+		ratings.add(r2);
+		client.rateBooks(ratings);
+
+		try {
+			client.getTopRatedBooks(-1);
+			fail();
+		} catch (BookStoreException ex) {
+			;
+		}
+
+		// A subsequent valid call must still see the complete, correct state.
+		List<Book> books = client.getTopRatedBooks(2);
+		assertTrue(books.size() == 2);
+		assertTrue(books.get(0).getISBN() == 1);
+		assertTrue(books.get(1).getISBN() == getDefaultBook().getISBN());
+	}
+
+	/**
+	 * Tests that getBooksInDemand returns a complete, consistent snapshot
+	 * tied to buyBooks' all-or-nothing semantics: when a purchase fails
+	 * because one book lacks sufficient stock, only that book is reported
+	 * in demand, while a book with sufficient stock in the same (failed,
+	 * rolled-back) request is neither bought nor reported in demand.
+	 *
+	 * @throws BookStoreException
+	 *             the book store exception
+	 */
+	@Test
+	public void testGetBooksInDemandAllOrNothing() throws BookStoreException {
+		addBooks(1, 5); // sufficient stock on its own
+
+		Set<BookCopy> booksToBuy = new HashSet<BookCopy>();
+		booksToBuy.add(new BookCopy(1, 1)); // would succeed alone
+		booksToBuy.add(new BookCopy(getDefaultBook().getISBN(), NUM_COPIES + 1)); // insufficient stock
+
+		try {
+			client.buyBooks(booksToBuy);
+			fail();
+		} catch (BookStoreException ex) {
+			;
+		}
+
+		List<StockBook> booksInDemand = storeManager.getBooksInDemand();
+		assertTrue(booksInDemand.size() == 1);
+		assertTrue(booksInDemand.get(0).getISBN() == getDefaultBook().getISBN());
+		assertTrue(booksInDemand.get(0).getNumSaleMisses() == 1);
+
+		for (StockBook book : storeManager.getBooks()) {
+			if (book.getISBN() == 1) {
+				assertTrue(book.getNumCopies() == 5);
+				assertTrue(book.getNumSaleMisses() == 0);
+			}
+		}
+	}
 
 	/**
 	 * Tear down after class.
